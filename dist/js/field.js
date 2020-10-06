@@ -832,6 +832,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 //
 //
 //
+//
 
 
 
@@ -857,11 +858,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
     watch: {
         errors: function errors(_errors) {
+            console.log(_errors);
             var errObj = _errors.errors.hasOwnProperty(this.field.attribute) ? _errors.errors[this.field.attribute][0] : {};
             Object.keys(errObj).forEach(function (key) {
                 errObj[key.replace(/\./g, '_')] = errObj[key];
                 delete errObj[key];
             });
+            console.log(errObj);
             this.errorList = new __WEBPACK_IMPORTED_MODULE_0_laravel_nova__["Errors"](errObj);
         }
     },
@@ -34751,11 +34754,12 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
 //
 //
 //
+//
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     name: "relationship-form-item",
 
-    props: ['value', 'label', 'id', 'modelId', 'modelKey', 'errors', 'field'],
+    props: ['value', 'label', 'id', 'modelId', 'modelKey', 'errors', 'field', 'relationKey'],
 
     computed: {
         fields: function fields() {
@@ -34768,7 +34772,9 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
                     'attribute': _this.value[attrib].meta.component === "file-field" ? attrib + '?' + _this.id : _this.field.attribute + '_' + _this.id + '_' + attrib, // This is needed to enable delete link for file without triggering duplicate id warning
                     'name': _this.value[attrib].meta.singularLabel,
                     'deletable': _this.modelId > 0, // Hide delete button if model Id is not present, i.e. new model
-                    'attrib': attrib
+                    'attrib': attrib,
+                    'required': _this.value[attrib].required,
+                    'validationKey': _this.relationKey + '_0_' + attrib // @todo how to handle next items?
                 });
             }), 'attrib');
         },
@@ -34931,6 +34937,7 @@ var render = function() {
                 "full-width-content": true,
                 errors: _vm.errors,
                 "resource-id": _vm.modelId,
+                "show-help-text": "dsadsa",
                 "resource-name": _vm.modelKey
               }
             })
@@ -35007,6 +35014,7 @@ var render = function() {
                   id: index,
                   "model-id": items.modelId,
                   "model-key": _vm.field.modelKey,
+                  "relation-key": _vm.field.attribute,
                   value: items.fields,
                   errors: _vm.errorList,
                   field: _vm.field

@@ -20,6 +20,7 @@
           :id="index"
           :model-id="items.modelId"
           :model-key="field.modelKey"
+          :relation-key="field.attribute"
           :value="items.fields"
           :errors="errorList"
           :field="field"
@@ -67,13 +68,15 @@ export default {
         }
     },
 
-    watch: {
+  watch: {
         errors: function (errors) {
+          console.log(errors);
             let errObj = errors.errors.hasOwnProperty(this.field.attribute) ? errors.errors[this.field.attribute][0] : {};
             Object.keys(errObj).forEach(key=>{
                 errObj[key.replace(/\./g , '_')] = errObj[key];
                 delete errObj[key];
             });
+            console.log(errObj);
             this.errorList =  new Errors(errObj);
         },
     },

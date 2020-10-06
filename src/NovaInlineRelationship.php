@@ -477,6 +477,7 @@ class NovaInlineRelationship extends Field
                 'options' => $value->meta,
                 'rules' => $value->rules,
                 'attribute' => $value->attribute,
+                'required' => in_array('required', $value->rules),
             ];
         });
     }

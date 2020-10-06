@@ -46,6 +46,7 @@
                 :full-width-content="true"
                 :errors="errors"
                 :resource-id="modelId"
+                       :show-help-text="'dsadsa'"
                 :resource-name="modelKey">
             </component>
         </div>
@@ -63,7 +64,8 @@
             'modelId',
             'modelKey',
             'errors',
-            'field'
+            'field',
+            'relationKey'
         ],
 
         computed: {
@@ -71,7 +73,7 @@
                 return _.keyBy(
                     Object.keys({ ...this.value }).map(
                         attrib => {
-                            return {
+                          return {
                                 ...{
                                     'options': {}
                                 },
@@ -82,7 +84,9 @@
                                         this.field.attribute + '_' + this.id + '_' + attrib, // This is needed to enable delete link for file without triggering duplicate id warning
                                     'name': this.value[attrib].meta.singularLabel,
                                     'deletable': this.modelId > 0, // Hide delete button if model Id is not present, i.e. new model
-                                    'attrib': attrib
+                                    'attrib': attrib,
+                                    'required': this.value[attrib].required,
+                                    'validationKey': this.relationKey + '_0_' + attrib, // @todo how to handle next items?
                                 }
                             }
                         }
