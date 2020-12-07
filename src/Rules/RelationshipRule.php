@@ -63,7 +63,7 @@ class RelationshipRule implements Rule
                 }, $attributeValues);
             }
             return $attributeValues['values'];
-        }, $input);
+        }, array_filter($input));
 
         $validator = Validator::make($input, $this->rules, $this->messages, $this->attributes);
 
