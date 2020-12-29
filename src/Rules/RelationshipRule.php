@@ -52,19 +52,6 @@ class RelationshipRule implements Rule
     {
         $input = [$attribute => is_array($value) ? $value : json_decode($value, true)];
 
-        $input = array_map(function ($attributeValues) {
-
-            if (is_array($attributeValues)) {
-                return array_map(function ($values) {
-                    if(is_array($values) && key_exists('values', $values)) {
-                        return $values['values'];
-                    }
-                    return $values;
-                }, $attributeValues);
-            }
-            return $attributeValues['values'];
-        }, array_filter($input));
-
         $validator = Validator::make($input, $this->rules, $this->messages, $this->attributes);
 
         $this->response = $validator->errors();

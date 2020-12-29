@@ -173,11 +173,11 @@ class NovaInlineRelationship extends Field
      */
     public function getPropertiesWithMetaForForms($resource, $attribute): Collection
     {
-        $fields = $this->getFieldsFromResource($resource, $attribute)
-            ->filter->authorize(app(NovaRequest::class))
-            ->filter(function ($field) {
-                $request = app(NovaRequest::class);
+        $request = app(NovaRequest::class);
 
+        $fields = $this->getFieldsFromResource($resource, $attribute)
+            ->filter->authorize($request)
+            ->filter(function ($field) use ($request) {
                 return ($request->isCreateOrAttachRequest() && $field->showOnCreation)
                     || ($request->isUpdateOrUpdateAttachedRequest() && $field->showOnUpdate);
             });
@@ -324,11 +324,14 @@ class NovaInlineRelationship extends Field
         /** @var Field $class */
         $class = app($item['component'], $attrs);
 
+
         if (isset($value) && is_callable($class->resolveCallback)) {
             $value = call_user_func($class->resolveCallback, $value, $resource, $attrib);
         }
 
         $class->value = $value !== null ? $value : '';
+
+        $item['value'] = $value !== null ? $value : '';
 
         if (! empty($item['options']) && is_array($item['options'])) {
             $class->withMeta($item['options']);
@@ -342,7 +345,8 @@ class NovaInlineRelationship extends Field
 
         $item['meta'] = $class->jsonSerialize();
         $item['meta']['singularLabel'] = $item['label'] ?? $attrib;
-        $item['meta']['placeholder'] = 'Add ' . $item['meta']['singularLabel'];
+        $item['meta']['placeholder'] = $item['meta']['singularLabel'];
+        $item['meta']['value'] = $item['value'];
 
         return $item;
     }
@@ -405,7 +409,7 @@ class NovaInlineRelationship extends Field
 
         $properties->each(function ($child, $childAttribute) use ($attribute, &$ruleArray, &$messageArray, &$attribArray) {
             if (! empty($child['rules'])) {
-                $name = "{$attribute}.*.{$childAttribute}";
+                $name = "{$attribute}.*.values.{$childAttribute}";
                 $ruleArray[$name] = $child['rules'];
                 $attribArray[$name] = $child['label'] ?? $childAttribute;
 
@@ -450,7 +454,7 @@ class NovaInlineRelationship extends Field
             ? new $this->resourceClass($model)
             : Nova::newResourceFromModel($model->{$attribute}()->getRelated());
 
-        return collect($resource->availableFields(app(NovaRequest::class)))
+        return collect($resource->availableFields(app(NovaInlineRelationshipRequest::class)))
             ->reject(function ($field) use ($resource) {
                 return $field instanceof ListableField ||
                     $field instanceof ResourceToolElement ||
@@ -465,6 +469,7 @@ class NovaInlineRelationship extends Field
      * Get properties for each field.
      *
      * @param Collection $fields
+     * @param NovaRequest $request
      *
      * @return Collection
      */
@@ -474,10 +479,9 @@ class NovaInlineRelationship extends Field
             return [
                 'component' => get_class($value),
                 'label' => $value->name,
-                'options' => $value->meta,
+                'options' => $value->jsonSerialize(),
                 'rules' => $value->rules,
                 'attribute' => $value->attribute,
-                'required' => in_array('required', $value->rules),
             ];
         });
     }
@@ -495,12 +499,16 @@ class NovaInlineRelationship extends Field
             $this->value = collect(Arr::wrap($this->value));
         }
 
+
         $this->value = $this->value->map(function ($items) use ($properties) {
             return collect($items)
                 ->map(function ($value, $key) use ($properties, $items) {
-                    return $properties->has($key)
+
+                    $res = $properties->has($key)
                         ? $this->setMetaFromClass($properties->get($key), $key, $items->{$key} ?? $value)
                         : null;
+
+                    return $res;
                 })
                 ->filter();
         });
@@ -527,9 +535,9 @@ class NovaInlineRelationship extends Field
                     $newRequest = $this->getDuplicateRequest($request, $item);
 
                     return $this->getValueFromField($field, $newRequest, $key)
-                        ?? ($field instanceof File) && ! empty($value)
+                        ?? ($field instanceof File && ! empty($value)
                             ? $value
-                            : null;
+                            : null);
                 }
 
                 return $value;
